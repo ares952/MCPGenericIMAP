@@ -149,6 +149,7 @@ activemq-data/
 
 # Environments
 .env
+secrets/
 .envrc
 .venv
 env/
@@ -216,3 +217,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# todo list
+data/todo.txt
+
+# local agent file
+AGENTS.md
