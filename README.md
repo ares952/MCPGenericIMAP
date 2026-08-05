@@ -188,3 +188,53 @@ read-only annotation.
 The Secure MCP Tunnel, ChatGPT Work configuration, and scheduled analysis are deferred
 until this local milestone has passed container, Inspector, and disposable-account
 verification.
+
+
+## MCP connection to chatgpt
+
+- Open https://platform.openai.com/settings/organization/api-keys
+- new API key is needed:
+  - create secrets/control_plane_api_key 
+  - copy there a new key from the openai website
+  - restrict permissions to 600 and 65532:65532 not to be available to anyone
+- Open https://platform.openai.com/settings/organization/tunnels
+- it is needed to:
+  - create a new tunnel
+  - assign it to the personal organization
+  - assign it to workspace, where it will be used
+  - get tunnel ID, copy it to CONTROL_PLANE_TUNNEL_ID into .env file
+  - create runtime API for tunnel client
+  - do not share API key, do not put it to docker compose.yaml
+- Open https://platform.openai.com/settings/organization/tunnels
+  - click on Download tunnel-client and select the version you need (e.g. v0.0.10 for linux-amd64)
+  - extract and store the file to tunnel-client folder
+- build docker and check logs:
+ ```
+ docker compose logs --tail=100 tunnel-client
+ ```
+- verify tunnel_id
+- verify health and conenctions:
+```
+curl -i http://127.0.0.1:8702/healthz
+curl -i http://127.0.0.1:8702/readyz
+```
+- you should get e.g.:
+```
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Wed, 05 Aug 2026 14:04:16 GMT
+Content-Length: 4
+
+live
+```
+- go to Chatgpt Settings->Securitty and login
+- enable Developer mode
+- open ChatGPT Plugins (or browse for plugins)
+- klick to + and enter e.g.:
+  - change connection to Tunnel and select your tunnel
+  - Name: My IMAP
+  - Description: Read-only access to my IMAP mailbox
+  - choose no authentication (tunnel is used)
+  - agree with the risk
+  - create plugin
+  - and then connect

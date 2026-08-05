@@ -50,6 +50,28 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+  tunnel-client:
+    build:
+      context: ./tunnel-client
+    restart: unless-stopped
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    environment:
+      CONTROL_PLANE_TUNNEL_ID: ${CONTROL_PLANE_TUNNEL_ID}
+      MCP_SERVER_URL: http://mcp-server:${MCP_PORT:-8700}/mcp
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      HEALTH_LISTEN_ADDR: :${MCP_TUNNEL_PORT:-8702}
+    command:
+      - --control-plane.api-key=file:/run/secrets/control_plane_api_key
+    secrets:
+      - control_plane_api_key
+    ports:
+      - "127.0.0.1:${MCP_TUNNEL_PORT:-8702}:${MCP_TUNNEL_PORT:-8702}"
+
 secrets:
+  control_plane_api_key:
+    file: ./secrets/control_plane_api_key
   imap_password:
     file: ./secrets/imap_password
