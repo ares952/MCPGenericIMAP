@@ -5,10 +5,10 @@ services:
     env_file: .env
     environment:
       MCP_HOST: 0.0.0.0
-      MCP_PORT: 8700
+      MCP_PORT: ${MCP_PORT:-8700}
       IMAP_PASSWORD_FILE: /run/secrets/imap_password
     ports:
-      - "127.0.0.1:${MCP_HOST_PORT:-8700}:8700"
+      - "127.0.0.1:${MCP_PORT:-8700}:${MCP_PORT:-8700}"
     secrets:
       - imap_password
     read_only: true
@@ -17,7 +17,7 @@ services:
     mem_limit: 256m
     cpus: 0.50
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8700), 3).close()"]
+      test: ["CMD", "python", "-c", "import os, socket; socket.create_connection(('127.0.0.1', int(os.environ['MCP_PORT'])), 3).close()"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -29,11 +29,11 @@ services:
     env_file: .env
     environment:
       MCP_HOST: 0.0.0.0
-      MCP_PORT: 8700
+      MCP_PORT: ${MCP_DEV_PORT:-8701}
       IMAP_PASSWORD_FILE: /run/secrets/imap_password
       PYTHONPATH: /app/src
     ports:
-      - "127.0.0.1:${MCP_DEV_PORT:-8701}:8700"
+      - "127.0.0.1:${MCP_DEV_PORT:-8701}:${MCP_DEV_PORT:-8701}"
     secrets:
       - imap_password
     volumes:
@@ -45,7 +45,7 @@ services:
     mem_limit: 256m
     cpus: 0.50
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8700), 3).close()"]
+      test: ["CMD", "python", "-c", "import os, socket; socket.create_connection(('127.0.0.1', int(os.environ['MCP_PORT'])), 3).close()"]
       interval: 30s
       timeout: 5s
       retries: 3

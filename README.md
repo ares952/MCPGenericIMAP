@@ -87,9 +87,11 @@ docker compose ps
 docker compose logs --tail=100 mcp-server
 ```
 
-The published endpoint is `http://127.0.0.1:8700/mcp` by default. It is not reachable
-from another host. The image runs as UID 10001, uses a read-only filesystem, and keeps
-no persistent mailbox data.
+The published endpoint is `http://127.0.0.1:8700/mcp` by default. Configure the
+production and development ports centrally with `MCP_PORT` and `MCP_DEV_PORT` in
+`.env`; Compose uses each value for the application listener, localhost publication,
+and health check. The endpoint is not reachable from another host. The image runs as
+UID 10001, uses a read-only filesystem, and keeps no persistent mailbox data.
 
 The optional development profile mounts only `src/` read-only and uses port 8701:
 
