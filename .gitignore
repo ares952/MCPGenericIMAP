@@ -219,3 +219,6 @@ __marimo__/
 
 # todo list
 data/todo.txt
+
+# local agent file
+AGENTS.md
