@@ -119,11 +119,49 @@ That smoke test lists mailboxes only. Broader real-account validation should ver
 all tools using non-sensitive fixture mail while independently checking that no flags
 or mailbox state change.
 
-To inspect the running Streamable HTTP endpoint, use MCP Inspector from a machine that
-can reach the localhost-bound port, for example on the remote host:
+To inspect the running Streamable HTTP endpoint, use MCP Inspector 2 from a machine
+that can reach the localhost-bound port. In web mode, pass the transport and server
+URL explicitly:
 
 ```bash
-npx @modelcontextprotocol/inspector http://127.0.0.1:8700/mcp
+npx @modelcontextprotocol/inspector \
+  --web \
+  --transport http \
+  --server-url http://127.0.0.1:8700/mcp
+```
+
+Replace `8700` with the configured `MCP_PORT`. The Inspector web UI listens on remote
+port `6274` by default. When working through VS Code Remote SSH, forward remote port
+`6274` to local port `6274`. If local port `6274` is already occupied, VS Code may
+silently choose `6275`; the resulting browser origin is then rejected by Inspector's
+DNS-rebinding protection.
+
+Prefer stopping the stale local process or port forward and restoring the
+`6274 -> 6274` mapping. If a different local port is intentional, allow its exact
+browser origin when starting Inspector. For example, for a browser URL beginning with
+`http://127.0.0.1:6275`:
+
+```bash
+ALLOWED_ORIGINS=http://127.0.0.1:6275 \
+npx @modelcontextprotocol/inspector \
+  --web \
+  --transport http \
+  --server-url http://127.0.0.1:8700/mcp
+```
+
+`ALLOWED_ORIGINS` must contain the browser origin (`scheme://host:port`), not the MCP
+server URL or port. Do not include a path, query string, or token, and do not disable
+Inspector authentication or DNS-rebinding protection. Inspector does not accept a
+wildcard localhost port, so a dynamically remapped port must be allowed explicitly.
+
+For a non-browser discovery check, use CLI mode:
+
+```bash
+npx @modelcontextprotocol/inspector \
+  --cli \
+  --transport http \
+  --server-url http://127.0.0.1:8700/mcp \
+  --method tools/list
 ```
 
 Confirm discovery of exactly the five tools listed above and that every tool has the
@@ -141,6 +179,9 @@ read-only annotation.
   sequence numbers are never used as identifiers.
 - Oversized bodies and attachments are rejected rather than truncated. Unsupported
   attachment types are rejected by default.
+- Inspector web errors containing `Invalid origin` come from Inspector itself, not
+  from this MCP endpoint. Check whether Remote SSH changed local port `6274` and set
+  `ALLOWED_ORIGINS` to the exact origin shown in the browser address bar if needed.
 - The Docker health check proves that the MCP TCP listener accepts connections; it does
   not authenticate to IMAP.
 
