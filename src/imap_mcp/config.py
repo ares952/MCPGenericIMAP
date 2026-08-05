@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Mapping
 
 
 class SettingsError(ValueError):
@@ -31,6 +31,14 @@ class SafetyLimits:
 
 
 @dataclass(frozen=True, slots=True)
+class HttpSettings:
+    """Private HTTP listener configuration for the MCP service."""
+
+    host: str
+    port: int
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     """Validated runtime configuration for the read-only IMAP service."""
 
@@ -41,6 +49,7 @@ class Settings:
     tls_mode: TlsMode
     allowed_mailboxes: tuple[str, ...]
     limits: SafetyLimits
+    http: HttpSettings
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
@@ -73,18 +82,16 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         allowed_mailboxes=mailboxes,
         limits=SafetyLimits(
             max_results=_positive_int(environ, "IMAP_MAX_RESULTS", 25, maximum=100),
-            max_body_bytes=_positive_int(
-                environ, "IMAP_MAX_BODY_BYTES", 65_536, maximum=1_048_576
-            ),
+            max_body_bytes=_positive_int(environ, "IMAP_MAX_BODY_BYTES", 65_536, maximum=1_048_576),
             max_attachment_bytes=_positive_int(
                 environ, "IMAP_MAX_ATTACHMENT_BYTES", 5_242_880, maximum=26_214_400
             ),
-            max_query_length=_positive_int(
-                environ, "IMAP_MAX_QUERY_LENGTH", 256, maximum=1_024
-            ),
-            timeout_seconds=_positive_int(
-                environ, "IMAP_TIMEOUT_SECONDS", 20, maximum=120
-            ),
+            max_query_length=_positive_int(environ, "IMAP_MAX_QUERY_LENGTH", 256, maximum=1_024),
+            timeout_seconds=_positive_int(environ, "IMAP_TIMEOUT_SECONDS", 20, maximum=120),
+        ),
+        http=HttpSettings(
+            host=environ.get("MCP_HOST", "127.0.0.1").strip() or "127.0.0.1",
+            port=_positive_int(environ, "MCP_PORT", 8700, maximum=65535),
         ),
     )
 
@@ -120,9 +127,7 @@ def _parse_mailboxes(value: str) -> tuple[str, ...]:
     return mailboxes
 
 
-def _positive_int(
-    environ: Mapping[str, str], name: str, default: int, *, maximum: int
-) -> int:
+def _positive_int(environ: Mapping[str, str], name: str, default: int, *, maximum: int) -> int:
     raw_value = environ.get(name, str(default)).strip()
     try:
         value = int(raw_value)

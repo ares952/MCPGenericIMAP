@@ -25,6 +25,7 @@ def test_load_settings_uses_safe_defaults() -> None:
     assert settings.tls_mode is TlsMode.IMPLICIT_TLS
     assert settings.allowed_mailboxes == ("INBOX", "Archive")
     assert settings.limits.max_results == 25
+    assert settings.http.port == 8700
 
 
 def test_load_settings_accepts_password_file(tmp_path: Path) -> None:
